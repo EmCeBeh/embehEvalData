@@ -1,0 +1,6 @@
+numpy
+matplotlib
+xrayutilities
+scipy
+uncertainties
+pyEvalData

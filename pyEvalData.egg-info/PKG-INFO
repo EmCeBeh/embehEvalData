@@ -1,0 +1,13 @@
+Metadata-Version: 2.1
+Name: embehEvalData
+Version: 1.0
+Summary: addon to pyEvalData
+Home-page: https://github.com
+Author: Martin borchert
+Author-email: martin.b@robothek.de
+License: UNKNOWN
+Description: # embehEvalData
+        addon to pyEvalData
+        
+Platform: UNKNOWN
+Description-Content-Type: text/markdown
