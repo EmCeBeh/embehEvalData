@@ -1,13 +1,10 @@
-Metadata-Version: 2.1
+Metadata-Version: 1.0
 Name: embehEvalData
 Version: 1.0
-Summary: addon to pyEvalData
-Home-page: https://github.com
-Author: Martin borchert
+Summary: Python Modul to evaluate SPEC data together with pyEvalData
+Home-page: UNKNOWN
+Author: Martin Borchert
 Author-email: martin.b@robothek.de
 License: UNKNOWN
-Description: # embehEvalData
-        addon to pyEvalData
-        
+Description: UNKNOWN
 Platform: UNKNOWN
-Description-Content-Type: text/markdown
