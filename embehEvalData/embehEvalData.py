@@ -63,7 +63,8 @@ def plot_fit_and_save_MOKE(material, samples, data, seq_type = 'Fi', modl = 'las
         
         elif modl == 'laser':
             
-            mod = Model(doubleDecaySingleConv)
+            mod = Model(doubleDecaySingleConv,nan_policy = 'propagate',)
+            
             pars.add('sig', value=FWHM/(2*np.sqrt(2*np.log(2))), vary=False)
             
             sig_par = 'sig'
@@ -79,7 +80,6 @@ def plot_fit_and_save_MOKE(material, samples, data, seq_type = 'Fi', modl = 'las
                                                 xGrid = xgrid,
                                                 plotSeparate = False,
                                                 yErr = yErr,
-                                                nan_policy = 'propagate',
                                                 )
 
         samples[material]['data']['tau1'] = res[data.cList[0]]['tau1']
@@ -158,6 +158,7 @@ def plot_fit_and_save_MOKE(material, samples, data, seq_type = 'Fi', modl = 'las
         savefig('%s/Electric_%s.png'%(save_name, material), dpi = 300)
     show()
     return seqData
+
 
 def elementcolour(element_name):
     '''
