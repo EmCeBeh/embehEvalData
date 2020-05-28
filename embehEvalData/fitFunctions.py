@@ -187,4 +187,23 @@ def pseudoVoigt(x, mu, sigma, A, alpha):
 def reflectivityPseudoVoigt(x, ampl1, const1, center1, ampl2, center2, sigma2, alpha2):
     model1 = ampl1*(x-center1)**(-4) + const1
     model2 = ampl2*(alpha2 * 1/(1 + ((x-center2)/sigma2)**2) + (1-alpha2)*exp(-log(2)*((x-center2)/sigma2)**2))
-    return model1 + model2 
+    return model1 + model2
+    
+def saturation(x, x0, A=1, k=1):
+    
+    #if x0 < min(x) or x0 > max(x):
+    #   raise ValueError()
+    
+    s = sigmoid(x, x0, k=k)
+    slope = max((k*s*(1-s)))
+    y =  (x-x0)*slope+1/2
+    s[x<x0] = y[x<x0]
+    
+    c = 1/2-x0*slope
+    s = s-c
+    
+    
+    s[x<0] = 0
+    s = A*s/max(s)
+    
+    return s

@@ -2,6 +2,7 @@ from numpy import *
 from pandas import *
 from pyEvalData import *
 from fitFunctions import *
+from matplotlib.pyplot import*
 from lmfit import *
 import numpy as np
 from collections import OrderedDict
@@ -15,8 +16,8 @@ def evaluateFunction_test():
     print('Loaded evaluateFunctionss.py')
 
 
-def plot_fit_and_save_MOKE(material, samples, data, seq_type = 'Fi', modl = 'laser', norm2 = 1,
-                          t0_0=0, tau1_0=0.1, tau2_0=10, A_0=1, B_0=-1, FWHM=0.054, dofit = 1, vary = 1, vary_t0 = 1, fit_cutoff = False, changes= None,
+def plot_fit_and_save_MOKE(material, samples, data, seq_type = 'Fi', modl = 'laser', norm2 = 1, yErr = 'none',
+                          t0_0=0, tau1_0=0.1, tau2_0=10, A_0=1, B_0=-1, FWHM=0.054, dofit = 1, vary = 1, vary_t0 = 1, fit_cutoff = False, lastResAsPar = True, changes= None, demagremag = False,
                           cutoff_l = -1, cutoff_r = 3, cutoff_b = 0, cutoff_t = 1.1, save_name = None, xscale_type = 'symlog', **legend_args):
     data.cList = ['M']
     sample = samples[material]
@@ -31,17 +32,20 @@ def plot_fit_and_save_MOKE(material, samples, data, seq_type = 'Fi', modl = 'las
             print("Fitting the entire range")
     else:
         xgrid = []
-        select='x2plot<%d'%fit_cutoff
+        select='x2plot<%.3f'%fit_cutoff
     
-    fig, ax = subplots() #figsize=(30, 14)
     
     if dofit:
+        if demagremag:
+            bound = 0
+        else:
+            bound = None
         pars = Parameters()
         pars.add('t0', value = t0_0, vary = vary_t0)
         pars.add('tau1', value = tau1_0, vary = vary)
-        pars.add('tau2', value = tau2_0, vary = vary)
-        pars.add('A', value = A_0 , vary = vary)
-        pars.add('B', value = B_0 ,vary = vary)
+        pars.add('tau2', value = tau2_0, min = bound, vary = vary)
+        pars.add('A', value = A_0, vary = vary)
+        pars.add('B', value = B_0, max = bound, vary = vary)
         #pars['B'].set(expr='-A')
         if changes is not None:
             for change in changes:
@@ -63,22 +67,21 @@ def plot_fit_and_save_MOKE(material, samples, data, seq_type = 'Fi', modl = 'las
             pars.add('sig', value=FWHM/(2*np.sqrt(2*np.log(2))), vary=False)
             
             sig_par = 'sig'
-        
-        res, params, fit = data.fitScanSequence(seq, mod, pars,
+        print(seq)
+        res, params, seqData = data.fitScanSequence(seq, mod, pars,
                                                 sequenceType = seq_type2,
                                                 norm2one = norm2,
                                                 offsetT0 = 1,
                                                 fitReport = 0,
-                                                lastResAsPar = 1,
+                                                lastResAsPar = lastResAsPar,
                                                 select = select,
                                                 showSingle = False,
                                                 xGrid = xgrid,
                                                 plotSeparate = False,
-                                                yErr = None,
+                                                yErr = yErr,
                                                 nan_policy = 'propagate',
-                                                fitGridPoints=50000,
-                                               )
-        
+                                                )
+
         samples[material]['data']['tau1'] = res[data.cList[0]]['tau1']
         samples[material]['data']['tau1Err'] = res[data.cList[0]]['tau1Err']
         samples[material]['data']['tau2'] = res[data.cList[0]]['tau2']
@@ -91,9 +94,8 @@ def plot_fit_and_save_MOKE(material, samples, data, seq_type = 'Fi', modl = 'las
         samples[material]['data']['sigErr'] = res[data.cList[0]][sig_par+'Err']
         samples[material]['data']['t0'] = res[data.cList[0]]['t0']
         samples[material]['data']['t0Err'] = res[data.cList[0]]['t0Err']
-        
     else:
-        data.plotScanSequence(seq, norm2one=norm2,sequenceType=seq_type,yErr = None)
+        seqData, params, nams, labs = data.plotScanSequence(seq, norm2one=norm2,sequenceType=seq_type,yErr = None)
 
     if 'Gd' in material:
         col = 'k'
@@ -106,9 +108,9 @@ def plot_fit_and_save_MOKE(material, samples, data, seq_type = 'Fi', modl = 'las
     else:
         col = 'k'
 
-    title(material, color = col)       
+    title(material[:-4], color = col)       
     xlabel('Delay/ps')      
-    ylabel('M(t)')
+    ylabel(r'M(t) / $M_0$')
     xlim(cutoff_l,cutoff_r)
     ylim(cutoff_b, cutoff_t)
     if xscale_type == 'symlog':
@@ -120,12 +122,13 @@ def plot_fit_and_save_MOKE(material, samples, data, seq_type = 'Fi', modl = 'las
         legend(**legend_args)
     
     
-    minorticks_on()
+    #minorticks_on()
     tight_layout()
     if save_name is not None:
         savefig('%s/Magnetic_%s.png'%(save_name, material), dpi=300)
+        savefig('results_evaluation/Magnetic_%s.png'%material[:-4], bbox_inches='tight', dpi = 600)
     show()
-################################################################################################################
+    ################################################################################################################
     
     if dofit and vary_t0:
         figure(None,(30, 4))
@@ -154,8 +157,49 @@ def plot_fit_and_save_MOKE(material, samples, data, seq_type = 'Fi', modl = 'las
     if save_name:
         savefig('%s/Electric_%s.png'%(save_name, material), dpi = 300)
     show()
- 
- 
+    return seqData
+
+def elementcolour(element_name):
+    '''
+    
+    Gd: col = 'k'
+    Co: col = 'b'
+    Fe: col = 'r'
+    Ni: col = 'g'
+    else: col = 'k' 
+    
+    '''
+    if 'Gd' in element_name:
+        col = 'k'
+    elif 'Co' in element_name:
+        col = 'b'
+        if 'Pt' in element_name:
+            linestyle = '--'
+        else:
+            linestyle = '-'
+    elif 'Fe' in element_name:
+        col = 'r'
+        if 'Pt' in element_name:
+            linestyle = '--'
+        else:
+            linestyle = '-'
+    elif 'Ni' in element_name:
+        col = 'g'
+        if 'Pt' in element_name:
+            linestyle = '--'
+        else:
+            linestyle = '-'
+    else:
+        col = 'k'
+    
+    return col, linestyle
+    
+
+
+
+
+
+    
 def copy_spec_file(year, month, quarter, name, copy_file = True):
     filePath = ''                                                                                               
     specFileExt = '.spec'  
@@ -189,7 +233,7 @@ def copy_staticMOKE_files(year, month, day, user='mb',folder = 'new_2020'):
     return staticdata 
     
 
-def measurement_printer(threshold, samples, data, verbose = True):
+def measurement_printer(threshold, samples, data, verbose = True, legacy = False):
     measurements = {}
     for name,value in samples.items():
         sequence = value['num']
@@ -206,11 +250,14 @@ def measurement_printer(threshold, samples, data, verbose = True):
             
             
             for run in sequence:
-                try:                                                                                      
+                try:                                                                          
                     fluence = data.getScanData(run)[0]['fluence'][0]
                     mhor = data.getScanData(run)[0]['mhor'][0]
                     mver = data.getScanData(run)[0]['mver'][0]
-                    magneticfield = mean(data.getScanData(run)[1]['magneticfield'])
+                    if legacy:
+                        magneticfield = 0
+                    else:
+                        magneticfield = mean(data.getScanData(run)[1]['magneticfield'])
                     points = len(data.getScanData(run)[0])
                     if points >= threshold:                                                               
                         if verbose:
@@ -221,10 +268,10 @@ def measurement_printer(threshold, samples, data, verbose = True):
                         if verbose:
                             print('%04d'%run, '                           | %05.2f mJ/cm²'%fluence, '| Incomplete: %03d pt'%points) 
                     else:                                         
-                    
+
                         if verbose:
                             print('%04d'%run, '                           | %05.2f mJ/cm²'%fluence, '| Incomplete: %03d pts'%points)                                                                   
-                except:                                                                                   
+                except:
                     if verbose:
                         print('Didnt work: #%04d'%run)
             properties = reshape(properties,[int(len(properties)/len(counters)),len(counters)])
@@ -255,7 +302,7 @@ def combine_runs(runs, prop):
     return [[list(runs[:,0][m].astype(int)),fluence] for (m,fluence) in zip(mask,uniques)]
 
 
-def samples_generator(measurements, blacklist, samples, data, raspi05 = True, prop = 'fluence'):
+def samples_generator(measurements, blacklist, samples, data, raspi05 = True, prop = 'fluence', legacy = False):
     """TEXT.
         
     Args:
@@ -290,21 +337,24 @@ def samples_generator(measurements, blacklist, samples, data, raspi05 = True, pr
             row = zeros([len(combined_run[0]),24])
             for i,run_num in enumerate(combined_run[0]):
                 
-                row[i,1]  = round(mean(data.getScanData(run_num)[1]['magneticfield']),0)   #magneticfield
-                row[i,2]  = round(mean(data.getScanData(run_num)[0]['mhor']),3)   #mhor
-                row[i,3]  = round(mean(data.getScanData(run_num)[0]['mver']),3)   #mver
+                if legacy:
+                    row[i,1]  = mean(data.getScanData(run_num)[0]['mhor'])                     #zeros
+                else:
+                    row[i,1]  = round(mean(data.getScanData(run_num)[1]['magneticfield']),0)   #magneticfield
+                row[i,2]  = round(mean(data.getScanData(run_num)[0]['mhor']),3)                #mhor
+                row[i,3]  = round(mean(data.getScanData(run_num)[0]['mver']),3)                #mver
                 
-                row[i,4]  = mean(data.getScanData(run_num)[0]['fluence'])                  #Fi
-                row[i,5]  = mean(data.getScanData(run_num)[0]['power'])*1000               #Pi
-                row[i,6]  = row[i,5]/row[i,4]                                              #Pi/Fi = R*A
+                row[i,4]  = mean(data.getScanData(run_num)[0]['fluence'])                      #Fi
+                row[i,5]  = mean(data.getScanData(run_num)[0]['power'])*1000                   #Pi
+                row[i,6]  = row[i,5]/row[i,4]                                                  #Pi/Fi = R*A
                 if raspi05:
-                    row[i,7]  = mean(data.getScanData(run_num)[1]['thorlabsPPM'])*1000     #Pt
-                    row[i,8]  = mean(data.getScanData(run_num)[1]['thorlabsPM'])*1000      #Pr
-                    row[i,9]  = row[i,5] - row[i,7] - row[i,8]                             #Pa = Pi - Pt - Pr
-                    row[i,10]  = row[i,7]/row[i,5]                                          #t
-                    row[i,11]  = row[i,8]/row[i,5]                                          #r
-                    row[i,12]  = row[i,9]/row[i,5]                                         #a
-                    row[i,13] = row[i,9]/row[i,6]                                          #Fa
+                    row[i,7]  = mean(data.getScanData(run_num)[1]['thorlabsPPM'])*1000         #Pt
+                    row[i,8]  = mean(data.getScanData(run_num)[1]['thorlabsPM'])*1000          #Pr
+                    row[i,9]  = row[i,5] - row[i,7] - row[i,8]                                 #Pa = Pi - Pt - Pr
+                    row[i,10]  = row[i,7]/row[i,5]                                             #t
+                    row[i,11]  = row[i,8]/row[i,5]                                             #r
+                    row[i,12]  = row[i,9]/row[i,5]                                             #a
+                    row[i,13] = row[i,9]/row[i,6]                                              #Fa
                 else:
                     for j in range(7,14):
                         row[i,j] = 0
