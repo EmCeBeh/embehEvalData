@@ -193,10 +193,6 @@ def elementcolour(element_name):
         col = 'k'
     
     return col, linestyle
-    
-
-
-
 
 
     
@@ -257,11 +253,26 @@ def measurement_printer(threshold, samples, data, verbose = True, legacy = False
                     if legacy:
                         magneticfield = 0
                     else:
-                        magneticfield = mean(data.getScanData(run)[1]['magneticfield'])
+                        magneticfield      = mean(data.getScanData(run)[1]['magneticfield'])
+                        magneticfield_std  = std(data.getScanData(run)[1]['magneticfield'])
+                        cryo_temp          = mean(data.getScanData(run)[1]['cryo_tempposition'])
+                        cryo_temp_std      = std(data.getScanData(run)[1]['cryo_tempposition'])
+                        cryo_heater        = mean(data.getScanData(run)[1]['cryo_heaterposition'])
+                        cryo_heater_std    = std(data.getScanData(run)[1]['cryo_heaterposition'])
+                        cryo_pressure      = mean(data.getScanData(run)[1]['cryo_pressure'])
+                        cryo_pressure_std  = std(data.getScanData(run)[1]['cryo_pressure'])
+                        
                     points = len(data.getScanData(run)[0])
                     if points >= threshold:                                                               
                         if verbose:
-                            print('%04d'%run, '| %05.2f mJ/cm²'%fluence, '| %03d pts'%points, '| mhor: %01.4f '%mhor, '| mver: %01.4f '%mver, '| magneticfield: %01.0fmT '%magneticfield)              
+                            print('%04d'%run,
+                                  '| %05.2f mJ/cm²'%fluence,
+                                  '| %03d pts'%points,
+                                  '| mhor: %01.4f '%mhor,
+                                  '| mver: %01.4f '%mver,
+                                  '| magneticfield: (%01.0f \pm %01.0f)mT'%(magneticfield,magneticfield_std),
+                                  '| Cryostat: (%01.2f \pm %01.2f)K, (%01.2f \pm %01.2f)V, (%01.3f \pm %01.3f)µbar'%(cryo_temp,cryo_temp_std,cryo_heater,cryo_heater_std,1000*cryo_pressure,1000*cryo_pressure_std),
+                                )
                         counters = [run,round(fluence,3),mhor,mver,round(magneticfield/2)*2]
                         properties = append(properties,counters)
                     elif points == 1:                                                                     
@@ -271,13 +282,13 @@ def measurement_printer(threshold, samples, data, verbose = True, legacy = False
 
                         if verbose:
                             print('%04d'%run, '                           | %05.2f mJ/cm²'%fluence, '| Incomplete: %03d pts'%points)                                                                   
-                except:
+                except e:
                     if verbose:
                         print('Didnt work: #%04d'%run)
+                        print(e)
             properties = reshape(properties,[int(len(properties)/len(counters)),len(counters)])
             measurements[name] = properties[properties[:,1].argsort()]
-    return(measurements)
- 
+    return(measurements) 
 
 def delete_elements_from_table(table,elements):
     for element in elements:
