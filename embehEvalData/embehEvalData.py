@@ -272,7 +272,7 @@ def measurement_printer(threshold, samples, data, verbose = True, legacy = False
                                   ' $\t|$ mhor: %01.3f '%mhor+
                                   ' $\t|$ mver: %01.3f '%mver+
                                   ' $\t|$ B: (%01.0f $\pm$ %01.0f)$\,$mT'%(magneticfield,magneticfield_std)+
-                                  ' $\t|$ Cryo: (%01.2f $\pm$ %01.2f)$\,$K, (%01.1f $\pm$ %01.1f)$\,$V, (%d $\pm$ %d)$\,$µbar'%(cryo_temp,cryo_temp_std,cryo_heater,cryo_heater_std,1000000*cryo_pressure,1000000*cryo_pressure_std)
+                                  ' $\t|$ Cryo: (%01.2f $\pm$ %01.2f)$\,$K, (%01.1f $\pm$ %01.1f)$\,$V, (%d $\pm$ %d)$\,$nbar'%(cryo_temp,cryo_temp_std,cryo_heater,cryo_heater_std,1000000*cryo_pressure,1000000*cryo_pressure_std)
                                 ))
                         counters = [run,round(fluence,3),mhor,mver,round(magneticfield/2)*2]
                         properties = append(properties,counters)
