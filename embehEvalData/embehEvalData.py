@@ -6,7 +6,7 @@ from matplotlib.pyplot import*
 from lmfit import *
 import numpy as np
 from collections import OrderedDict
-from IPython.display import display, Markdown, Latex
+from IPython.display import display, Markdown, Latex, Math
 from shutil import copyfile
 from copy import deepcopy
 
@@ -266,14 +266,14 @@ def measurement_printer(threshold, samples, data, verbose = True, legacy = False
                     points = len(data.getScanData(run)[0])
                     if points >= threshold:                                                               
                         if verbose:
-                            print('%04d'%run,
-                                  '| %05.2f mJ/cm²'%fluence,
-                                  '| %03d pts'%points,
-                                  '| mhor: %01.4f '%mhor,
-                                  '| mver: %01.4f '%mver,
-                                  '| magneticfield: (%01.0f \pm %01.0f)mT'%(magneticfield,magneticfield_std),
-                                  '| Cryostat: (%01.2f \pm %01.2f)K, (%01.2f \pm %01.2f)V, (%01.3f \pm %01.3f)µbar'%(cryo_temp,cryo_temp_std,cryo_heater,cryo_heater_std,1000*cryo_pressure,1000*cryo_pressure_std),
-                                )
+                            display(Latex(r'%04d'%run+
+                                  ' $\t|$ %05.2f$\,$mJ/cm²'%fluence+
+                                  ' $\t|$ %03d$\,$pts'%points+
+                                  ' $\t|$ mhor: %01.3f '%mhor+
+                                  ' $\t|$ mver: %01.3f '%mver+
+                                  ' $\t|$ B: (%01.0f $\pm$ %01.0f)$\,$mT'%(magneticfield,magneticfield_std)+
+                                  ' $\t|$ Cryo: (%01.2f $\pm$ %01.2f)$\,$K, (%01.1f $\pm$ %01.1f)$\,$V, (%d $\pm$ %d)$\,$µbar'%(cryo_temp,cryo_temp_std,cryo_heater,cryo_heater_std,1000000*cryo_pressure,1000000*cryo_pressure_std)
+                                ))
                         counters = [run,round(fluence,3),mhor,mver,round(magneticfield/2)*2]
                         properties = append(properties,counters)
                     elif points == 1:                                                                     
